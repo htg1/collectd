@@ -99,9 +99,12 @@
 #@BUILD_PLUGIN_BAROMETER_TRUE@LoadPlugin barometer
 #@BUILD_PLUGIN_BATTERY_TRUE@LoadPlugin battery
 #@BUILD_PLUGIN_BIND_TRUE@LoadPlugin bind
+#@BUILD_PLUGIN_BUDDYINFO_TRUE@LoadPlugin buddyinfo
 #@BUILD_PLUGIN_CEPH_TRUE@LoadPlugin ceph
 #@BUILD_PLUGIN_CGROUPS_TRUE@LoadPlugin cgroups
 #@BUILD_PLUGIN_CHRONY_TRUE@LoadPlugin chrony
+#@BUILD_PLUGIN_CHECK_UPTIME_TRUE@LoadPlugin check_uptime
+#@BUILD_PLUGIN_CONNECTIVITY_TRUE@LoadPlugin connectivity
 #@BUILD_PLUGIN_CONNTRACK_TRUE@LoadPlugin conntrack
 #@BUILD_PLUGIN_CONTEXTSWITCH_TRUE@LoadPlugin contextswitch
 @BUILD_PLUGIN_CPU_TRUE@@BUILD_PLUGIN_CPU_TRUE@LoadPlugin cpu
@@ -112,11 +115,13 @@
 #@BUILD_PLUGIN_CURL_JSON_TRUE@LoadPlugin curl_json
 #@BUILD_PLUGIN_CURL_XML_TRUE@LoadPlugin curl_xml
 #@BUILD_PLUGIN_DBI_TRUE@LoadPlugin dbi
+#@BUILD_PLUGIN_DCPMM_TRUE@LoadPlugin dcpmm
 #@BUILD_PLUGIN_DF_TRUE@LoadPlugin df
 #@BUILD_PLUGIN_DISK_TRUE@LoadPlugin disk
 #@BUILD_PLUGIN_DNS_TRUE@LoadPlugin dns
 #@BUILD_PLUGIN_DPDKEVENTS_TRUE@LoadPlugin dpdkevents
 #@BUILD_PLUGIN_DPDKSTAT_TRUE@LoadPlugin dpdkstat
+#@BUILD_PLUGIN_DPDK_TELEMETRY_TRUE@LoadPlugin dpdk_telemetry
 #@BUILD_PLUGIN_DRBD_TRUE@LoadPlugin drbd
 #@BUILD_PLUGIN_EMAIL_TRUE@LoadPlugin email
 #@BUILD_PLUGIN_ENTROPY_TRUE@LoadPlugin entropy
@@ -135,6 +140,7 @@
 @BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_PLUGIN_INTERFACE_TRUE@LoadPlugin interface
 #@BUILD_PLUGIN_IPC_TRUE@LoadPlugin ipc
 #@BUILD_PLUGIN_IPMI_TRUE@LoadPlugin ipmi
+#@BUILD_PLUGIN_IPSTATS_TRUE@LoadPlugin ipstats
 #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
 #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
 #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -142,7 +148,6 @@
 @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
 #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
 #@BUILD_PLUGIN_LUA_TRUE@LoadPlugin lua
-#@BUILD_PLUGIN_LVM_TRUE@LoadPlugin lvm
 #@BUILD_PLUGIN_MADWIFI_TRUE@LoadPlugin madwifi
 #@BUILD_PLUGIN_MBMON_TRUE@LoadPlugin mbmon
 #@BUILD_PLUGIN_MCELOG_TRUE@LoadPlugin mcelog
@@ -183,6 +188,7 @@
 #@BUILD_PLUGIN_PROCEVENT_TRUE@LoadPlugin procevent
 #@BUILD_PLUGIN_PROTOCOLS_TRUE@LoadPlugin protocols
 #@BUILD_PLUGIN_PYTHON_TRUE@LoadPlugin python
+#@BUILD_PLUGIN_REDFISH_TRUE@LoadPlugin redfish
 #@BUILD_PLUGIN_REDIS_TRUE@LoadPlugin redis
 #@BUILD_PLUGIN_ROUTEROS_TRUE@LoadPlugin routeros
 #@BUILD_PLUGIN_RRDCACHED_TRUE@LoadPlugin rrdcached
@@ -217,6 +223,7 @@
 #@BUILD_PLUGIN_WIRELESS_TRUE@LoadPlugin wireless
 #@BUILD_PLUGIN_WRITE_GRAPHITE_TRUE@LoadPlugin write_graphite
 #@BUILD_PLUGIN_WRITE_HTTP_TRUE@LoadPlugin write_http
+#@BUILD_PLUGIN_WRITE_INFLUXDB_UDP_TRUE@LoadPlugin write_influxdb_udp
 #@BUILD_PLUGIN_WRITE_KAFKA_TRUE@LoadPlugin write_kafka
 #@BUILD_PLUGIN_WRITE_LOG_TRUE@LoadPlugin write_log
 #@BUILD_PLUGIN_WRITE_MONGODB_TRUE@LoadPlugin write_mongodb
@@ -361,6 +368,10 @@
 #  </View>
 #</Plugin>
 
+#<Plugin buddyinfo>
+#	Zone "Normal"
+#</Plugin>
+
 #<Plugin ceph>
 #  LongRunAvgLatency false
 #  ConvertSpecialMetricTypes true
@@ -382,6 +393,10 @@
 #	Host    "localhost"
 #	Port    "323"
 #	Timeout "2"
+#</Plugin>
+
+#<Plugin connectivity>
+#  Interface eth0
 #</Plugin>
 
 #<Plugin cgroups>
@@ -544,6 +559,13 @@
 #	</Database>
 #</Plugin>
 
+#<Plugin dcpmm>
+#    Interval 10.0
+#    CollectHealth false
+#    CollectPerfMetrics true
+#    EnableDispatchAll false
+#</Plugin>
+
 #<Plugin df>
 #	Device "/dev/hda1"
 #	Device "192.168.0.2:/mnt/nfs"
@@ -602,6 +624,11 @@
 #  EnabledPortMask 0xffff
 #  PortName "interface1"
 #  PortName "interface2"
+#</Plugin>
+
+#<Plugin dpdk_telemetry>
+#	ClientSocketPath "/var/run/.client"
+#	DpdkSocketPath "/var/run/dpdk/rte/telemetry"
 #</Plugin>
 
 #<Plugin email>
@@ -1274,7 +1301,7 @@
 
 #<Plugin "procevent">
 #  BufferLength 10
-#  ProcessRegex "/^ovs.*$/" 
+#  ProcessRegex "/^ovs.*$/"
 #  Process tuned
 #</Plugin>
 
@@ -1307,6 +1334,43 @@
 #      <Query>
 #   </Node>
 #</Plugin>
+
+#<Plugin redfish>
+#  <Query "fans">
+#    Endpoint "/redfish/v1/Chassis/Chassis-1/Thermal"
+#    <Resource "Fans">
+#      <Property "ReadingRPM">
+#        PluginInstance "chassis-1"
+#        Type "rpm"
+#      </Property>
+#    </Resource>
+#  </Query>
+#  <Query "temperatures">
+#    Endpoint "/redfish/v1/Chassis/Chassis-1/Thermal"
+#    <Resource "Temperatures">
+#      <Property "ReadingCelsius">
+#        PluginInstance "chassis-1"
+#        Type "degrees"
+#      </Property>
+#    </Resource>
+#  </Query>
+#  <Query "voltages">
+#    Endpoint "/redfish/v1/Chassis/Chassis-1/Power"
+#    <Resource "Voltages">
+#      <Property "ReadingVolts">
+#        PluginInstance "chassis-1"
+#        Type "volts"
+#      </Property>
+#    </Resource>
+#  </Query>
+#  <Service "local">
+#    Host "127.0.0.1:5000"
+#    User "user"
+#    Passwd "passwd"
+#    Queries "fans" "voltages" "temperatures"
+#  </Service>
+#</Plugin>
+#
 
 #<Plugin routeros>
 #	<Router>
@@ -1410,6 +1474,7 @@
 #       Version 2
 #       Community "another_string"
 #       Collect "std_traffic" "hr_users"
+#       BulkSize 0
 #   </Host>
 #   <Host "some.ups.mydomain.org">
 #       Address "192.168.0.3"
@@ -1419,6 +1484,15 @@
 #       Interval 300
 # 	Timeout 5
 #	Retries 5
+#   </Host>
+#   <Host "highend.switch.example.org">
+#       Address "192.168.0.3"
+#       Version 2
+#       Community "another_string"
+#       Collect "std_traffic"
+#       Interval 10
+#       Timeout 10
+#       BulkSize 100
 #   </Host>
 #</Plugin>
 
@@ -1617,6 +1691,11 @@
 #	RunningAveragePowerLimit "7"
 #</Plugin>
 
+#<Plugin ubi>
+#	Device "ubi0"
+#	IgnoreSelected false
+#</Plugin>
+
 #<Plugin unixsock>
 #	SocketFile "@prefix@/var/run/@PACKAGE_NAME@-unixsock"
 #	SocketGroup "collectd"
@@ -1751,6 +1830,13 @@
 #		LowSpeedLimit 0
 #		Timeout 0
 #	</Node>
+#</Plugin>
+
+#<Plugin write_influxdb_udp>
+#  Server "localhost"
+#  StoreRates true
+#  MaxPacketSize 32768
+#  TimeToLive 128
 #</Plugin>
 
 #<Plugin write_kafka>

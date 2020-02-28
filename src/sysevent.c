@@ -472,7 +472,7 @@ static int read_socket() {
     } else {
       DEBUG("sysevent plugin: writing %s", buffer);
 
-      strncpy(ring.buffer[ring.head], buffer, sizeof(buffer));
+      sstrncpy(ring.buffer[ring.head], buffer, sizeof(buffer));
       ring.timestamp[ring.head] = cdtime();
       ring.head = next;
     }
@@ -754,9 +754,9 @@ static int start_socket_thread(void) /* {{{ */
 
   DEBUG("sysevent plugin: starting socket thread");
 
-  int status = plugin_thread_create(&sysevent_socket_thread_id,
-                                    /* attr = */ NULL, sysevent_socket_thread,
-                                    /* arg = */ (void *)0, "sysevent");
+  int status =
+      plugin_thread_create(&sysevent_socket_thread_id, sysevent_socket_thread,
+                           /* arg = */ (void *)0, "sysevent");
   if (status != 0) {
     sysevent_socket_thread_loop = 0;
     ERROR("sysevent plugin: starting socket thread failed.");
@@ -780,9 +780,9 @@ static int start_dequeue_thread(void) /* {{{ */
 
   sysevent_dequeue_thread_loop = 1;
 
-  int status = plugin_thread_create(&sysevent_dequeue_thread_id,
-                                    /* attr = */ NULL, sysevent_dequeue_thread,
-                                    /* arg = */ (void *)0, "ssyevent");
+  int status =
+      plugin_thread_create(&sysevent_dequeue_thread_id, sysevent_dequeue_thread,
+                           /* arg = */ (void *)0, "ssyevent");
   if (status != 0) {
     sysevent_dequeue_thread_loop = 0;
     ERROR("sysevent plugin: Starting dequeue thread failed.");
@@ -924,15 +924,25 @@ static int sysevent_init(void) /* {{{ */
   ring.buffer = (char **)calloc(buffer_length, sizeof(char *));
 
   if (ring.buffer == NULL) {
-    ERROR("sysevent plugin: sysevent_init calloc failed");
+    ERROR("sysevent plugin: sysevent_init ring buffer calloc failed");
     return -1;
   }
 
   for (int i = 0; i < buffer_length; i++) {
     ring.buffer[i] = calloc(1, listen_buffer_size);
+
+    if (ring.buffer[i] == NULL) {
+      ERROR("sysevent plugin: sysevent_init ring buffer entry calloc failed");
+      return -1;
+    }
   }
 
   ring.timestamp = (cdtime_t *)calloc(buffer_length, sizeof(cdtime_t));
+
+  if (ring.timestamp == NULL) {
+    ERROR("sysevent plugin: sysevent_init ring buffer timestamp calloc failed");
+    return -1;
+  }
 
   if (sock == -1) {
     struct addrinfo hints = {
